@@ -145,6 +145,17 @@
     [fileManager removeItemAtURL:file.contentURL error:NULL];
 }
 
+- (void)removeAllFiles
+{
+    // stop pending operations
+    [self.downloadQueue cancelAllOperations];
+    
+    // clean library info and remove directory
+    _libraryInfo = nil;
+    [self removeDirectoryAtPath:self.diskCachePath];
+
+}
+
 - (PTFile *)fileWithName:(NSString *)name
 {
     NSDictionary *files = [self.libraryInfo objectForKey:kPTLibraryInfoFilesKey];
@@ -184,6 +195,14 @@
                withIntermediateDirectories:YES
                                 attributes:nil
                                      error:NULL];
+    }
+}
+
+- (void)removeDirectoryAtPath:(NSString *)path
+{
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    if ([fileManager fileExistsAtPath:path]) {
+        [fileManager removeItemAtPath:path error:NULL];
     }
 }
 
