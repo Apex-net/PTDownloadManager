@@ -82,6 +82,8 @@
         _fileDownloadPath = defaultPath;
 
         _downloadQueue = [ASINetworkQueue queue];
+        _downloadQueue.delegate = self;
+        _downloadQueue.requestDidFinishSelector = @selector(queueDidFinishRequest);
         _downloadQueue.showAccurateProgress = YES;
         _downloadQueue.shouldCancelAllRequestsOnFailure = NO;
         [_downloadQueue go];
@@ -222,6 +224,13 @@
     request.allowResumeForFileDownloads = YES;
     request.shouldContinueWhenAppEntersBackground = YES;
     return request;
+}
+
+- (void)queueDidFinishRequest
+{
+    if (_downloadQueue.requestsCount == 0) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationDownloadComplete object:nil userInfo:nil];
+    }
 }
 
 @end

@@ -18,6 +18,8 @@
 
 #import "PTFile.h"
 
+static NSString *const kPTDownloadManagerNotificationDownloadComplete = @"PTDownloadManagerNotificationDownloadComplete";
+
 @interface PTDownloadManager : NSObject
 
 @property (nonatomic, readonly) NSArray *files;
