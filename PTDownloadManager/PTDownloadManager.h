@@ -31,6 +31,8 @@ static NSString *const kPTDownloadManagerNotificationDownloadComplete = @"PTDown
 - (PTFile *)addFileWithName:(NSString *)name date:(NSDate *)date request:(NSURLRequest *)request;
 - (PTFile *)fileWithName:(NSString *)name;
 
+- (void)startFileDownloads;
+
 - (void)removeFile:(PTFile *)file;
 - (void)removeAllFiles;
 

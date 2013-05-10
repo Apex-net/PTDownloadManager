@@ -130,6 +130,13 @@
     return [self fileWithName:name];
 }
 
+- (void)startFileDownloads
+{
+    for (PTFile *file in self.files) {
+        [file download];
+    }
+}
+
 - (void)removeFile:(PTFile *)file
 {
     ASIHTTPRequest *request = [self requestForFile:file];
