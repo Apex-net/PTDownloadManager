@@ -36,4 +36,6 @@ static NSString *const kPTDownloadManagerNotificationDownloadComplete = @"PTDown
 - (void)removeFile:(PTFile *)file;
 - (void)removeAllFiles;
 
+- (void)changeDefaultDownloadPath:(NSString *)path;
+
 @end

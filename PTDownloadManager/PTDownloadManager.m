@@ -111,6 +111,22 @@
     self.fileDownloadPath = path;
 }
 
+- (void)changeDefaultDownloadPath:(NSString *)path
+{
+    if (path) {
+        
+        // stop pending operations
+        [self.downloadQueue cancelAllOperations];
+        
+        // clean library info
+        _libraryInfo = nil;
+        
+        // set new path
+        self.diskCachePath = path;
+        self.fileDownloadPath = path;
+    }
+}
+
 - (PTFile *)addFileWithName:(NSString *)name date:(NSDate *)date request:(NSURLRequest *)request
 {
     [self createDirectoryAtPath:self.fileDownloadPath];
