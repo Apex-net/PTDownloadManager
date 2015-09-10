@@ -50,6 +50,8 @@
 @property (nonatomic, readonly) NSMutableDictionary *libraryInfo;
 @property (nonatomic, readonly) ASINetworkQueue *downloadQueue;
 
+@property (nonatomic, assign) BOOL scanningFileInDirectory;
+
 - (void)saveLibraryInfo;
 - (void)createDirectoryAtPath:(NSString *)path;
 - (ASIHTTPRequest *)requestForFile:(PTFile *)file;
@@ -61,6 +63,7 @@
 @synthesize diskCachePath = _diskCachePath;
 @synthesize fileDownloadPath = _fileDownloadPath;
 @synthesize downloadQueue = _downloadQueue;
+@synthesize scanningFileInDirectory = _scanningFileInDirectory;
 
 + (PTDownloadManager *)sharedManager
 {
@@ -80,6 +83,7 @@
                                  stringByAppendingPathComponent:@"PTDownloadManager"];
         _diskCachePath = defaultPath;
         _fileDownloadPath = defaultPath;
+        _scanningFileInDirectory = NO;
 
         _downloadQueue = [ASINetworkQueue queue];
         _downloadQueue.delegate = self;
@@ -148,8 +152,24 @@
 
 - (void)startFileDownloads
 {
+    [self startFileDownloadsForced:YES];
+}
+
+- (void)startFileDownloadsForced:(BOOL)force
+{
+    if (force == NO) {
+         _scanningFileInDirectory = YES;
+    }
+    
     for (PTFile *file in self.files) {
-        [file download];
+        if (force == YES || file.status != PTFileContentStatusAvailable) {
+            [file download];
+        }
+    }
+    
+    if (force == NO) {
+        _scanningFileInDirectory = NO;
+        [self performSelectorOnMainThread:@selector(queueDidFinishRequest) withObject:nil waitUntilDone:YES];
     }
 }
 
@@ -251,7 +271,7 @@
 
 - (void)queueDidFinishRequest
 {
-    if (_downloadQueue.requestsCount == 0) {
+    if (_downloadQueue.requestsCount == 0 && _scanningFileInDirectory == NO) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationDownloadComplete object:nil userInfo:nil];
     }
 }

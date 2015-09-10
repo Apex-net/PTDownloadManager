@@ -31,7 +31,14 @@ static NSString *const kPTDownloadManagerNotificationDownloadComplete = @"PTDown
 - (PTFile *)addFileWithName:(NSString *)name date:(NSDate *)date request:(NSURLRequest *)request;
 - (PTFile *)fileWithName:(NSString *)name;
 
-- (void)startFileDownloads;
+- (void)startFileDownloads __deprecated_msg("Method deprecated. Use `startFileDownloadsForced:");
+
+/* 'force' value:
+    - YES, all files will be downloaded
+    - NO, all files that are already downloaded, will not be re-downloaded
+*/
+
+- (void)startFileDownloadsForced:(BOOL)force;
 
 - (void)removeFile:(PTFile *)file;
 - (void)removeAllFiles;
