@@ -19,6 +19,7 @@
 #import "PTFile.h"
 
 static NSString *const kPTDownloadManagerNotificationDownloadComplete = @"PTDownloadManagerNotificationDownloadComplete";
+static NSString *const kPTDownloadManagerNotificationLoadFileComplete = @"PTDownloadManagerNotificationLoadFileComplete";
 
 @interface PTDownloadManager : NSObject
 

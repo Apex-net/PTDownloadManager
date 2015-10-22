@@ -88,6 +88,7 @@
         _downloadQueue = [ASINetworkQueue queue];
         _downloadQueue.delegate = self;
         _downloadQueue.requestDidFinishSelector = @selector(queueDidFinishRequest);
+        _downloadQueue.requestDidFailSelector = @selector(queueDidFailRequest);
         _downloadQueue.showAccurateProgress = YES;
         _downloadQueue.shouldCancelAllRequestsOnFailure = NO;
         [_downloadQueue go];
@@ -165,11 +166,14 @@
         if (force == YES || file.status != PTFileContentStatusAvailable) {
             [file download];
         }
+        else {
+            [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationLoadFileComplete object:file userInfo:nil];
+        }
     }
     
     if (force == NO) {
         _scanningFileInDirectory = NO;
-        [self performSelectorOnMainThread:@selector(queueDidFinishRequest) withObject:nil waitUntilDone:YES];
+        [self performSelectorOnMainThread:@selector(checkIfDownloadIsComplete) withObject:nil waitUntilDone:YES];
     }
 }
 
@@ -270,6 +274,20 @@
 }
 
 - (void)queueDidFinishRequest
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationLoadFileComplete object:nil userInfo:nil];
+    
+    [self checkIfDownloadIsComplete];
+}
+
+- (void)queueDidFailRequest
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationLoadFileComplete object:nil userInfo:nil];
+    
+    [self checkIfDownloadIsComplete];
+}
+
+- (void)checkIfDownloadIsComplete
 {
     if (_downloadQueue.requestsCount == 0 && _scanningFileInDirectory == NO) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationDownloadComplete object:nil userInfo:nil];
