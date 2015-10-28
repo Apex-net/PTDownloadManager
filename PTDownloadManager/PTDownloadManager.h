@@ -20,6 +20,7 @@
 
 static NSString *const kPTDownloadManagerNotificationDownloadComplete = @"PTDownloadManagerNotificationDownloadComplete";
 static NSString *const kPTDownloadManagerNotificationLoadFileComplete = @"PTDownloadManagerNotificationLoadFileComplete";
+static NSString *const kPTDownloadManagerNotificationLoadFileFail = @"PTDownloadManagerNotificationLoadFileFail";
 
 @interface PTDownloadManager : NSObject
 

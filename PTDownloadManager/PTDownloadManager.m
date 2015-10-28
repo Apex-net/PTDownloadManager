@@ -32,6 +32,7 @@
 @property (nonatomic) NSString *name;
 
 - (id)initWithName:(NSString *)name date:(NSDate *)date;
+- (id)initWithName:(NSString *)name date:(NSDate *)date downloadManager:(PTDownloadManager *)downloadManager;
 
 @end
 
@@ -48,7 +49,7 @@
 @property (nonatomic, retain) NSString *fileDownloadPath;
 
 @property (nonatomic, readonly) NSMutableDictionary *libraryInfo;
-@property (nonatomic, readonly) ASINetworkQueue *downloadQueue;
+@property (nonatomic, strong) ASINetworkQueue *downloadQueue;
 
 @property (nonatomic, assign) BOOL scanningFileInDirectory;
 
@@ -85,13 +86,13 @@
         _fileDownloadPath = defaultPath;
         _scanningFileInDirectory = NO;
 
-        _downloadQueue = [ASINetworkQueue queue];
-        _downloadQueue.delegate = self;
-        _downloadQueue.requestDidFinishSelector = @selector(queueDidFinishRequest);
-        _downloadQueue.requestDidFailSelector = @selector(queueDidFailRequest);
-        _downloadQueue.showAccurateProgress = YES;
-        _downloadQueue.shouldCancelAllRequestsOnFailure = NO;
-        [_downloadQueue go];
+        self.downloadQueue = [[ASINetworkQueue alloc] init];
+        self.downloadQueue.delegate = self;
+        self.downloadQueue.requestDidFinishSelector = @selector(queueDidFinishRequest);
+        self.downloadQueue.requestDidFailSelector = @selector(queueDidFailRequest);
+        self.downloadQueue.showAccurateProgress = YES;
+        self.downloadQueue.shouldCancelAllRequestsOnFailure = NO;
+        [self.downloadQueue go];
     }
     return self;
 }
@@ -167,7 +168,7 @@
             [file download];
         }
         else {
-            [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationLoadFileComplete object:file userInfo:nil];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationLoadFileComplete object:self userInfo:nil];
         }
     }
     
@@ -208,7 +209,7 @@
 - (PTFile *)fileWithName:(NSString *)name
 {
     NSDictionary *files = [self.libraryInfo objectForKey:kPTLibraryInfoFilesKey];
-    return [files objectForKey:name] ? [[PTFile alloc] initWithName:name date:[files objectForKey:name]] : nil;
+    return [files objectForKey:name] ? [[PTFile alloc] initWithName:name date:[files objectForKey:name] downloadManager:self] : nil;
 }
 
 - (NSMutableDictionary *)libraryInfo
@@ -275,14 +276,14 @@
 
 - (void)queueDidFinishRequest
 {
-    [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationLoadFileComplete object:nil userInfo:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationLoadFileComplete object:self userInfo:nil];
     
     [self checkIfDownloadIsComplete];
 }
 
 - (void)queueDidFailRequest
 {
-    [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationLoadFileComplete object:nil userInfo:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationLoadFileFail object:self userInfo:nil];
     
     [self checkIfDownloadIsComplete];
 }
@@ -290,7 +291,7 @@
 - (void)checkIfDownloadIsComplete
 {
     if (_downloadQueue.requestsCount == 0 && _scanningFileInDirectory == NO) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationDownloadComplete object:nil userInfo:nil];
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationDownloadComplete object:self userInfo:nil];
     }
 }
 

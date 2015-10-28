@@ -18,7 +18,6 @@
 
 #import "ASIHTTPRequest.h"
 #import "ASINetworkQueue.h"
-
 #import "PTDownloadManager.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,7 +40,11 @@
 @property UILabel *label;
 @property NSString *savedLabelText;
 
+@property (nonatomic, strong) PTDownloadManager *downloadManager;
+
+
 - (id)initWithName:(NSString *)name date:(NSDate *)date;
+- (id)initWithName:(NSString *)name date:(NSDate *)date downloadManager:(PTDownloadManager *)downloadManager;
 
 - (void)updateStatusForRequest:(ASIHTTPRequest *)request;
 
@@ -62,13 +65,26 @@
         _name = name;
         _date = date;
         _progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
+        _downloadManager = [PTDownloadManager sharedManager];
+    }
+    return self;
+}
+
+- (id)initWithName:(NSString *)name date:(NSDate *)date downloadManager:(PTDownloadManager *)downloadManager
+{
+    self = [super init];
+    if (self) {
+        _name = name;
+        _date = date;
+        _progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
+        _downloadManager = downloadManager;
     }
     return self;
 }
 
 - (NSURL *)contentURL
 {
-    return [NSURL fileURLWithPath:[[[PTDownloadManager sharedManager] requestForFile:self] downloadDestinationPath]];
+    return [NSURL fileURLWithPath:[[self.downloadManager requestForFile:self] downloadDestinationPath]];
 }
 
 - (PTFileContentStatus)status
@@ -78,7 +94,7 @@
         return PTFileContentStatusAvailable;
     }
     else {
-        ASIHTTPRequest *request = [[PTDownloadManager sharedManager] requestForFile:self];
+        ASIHTTPRequest *request = [self.downloadManager requestForFile:self];
         if (request && request.isExecuting) {
             return PTFileContentStatusDownloading;
         }
@@ -90,7 +106,7 @@
 - (NSOperation *)download
 {
     // Why '__unsafe_unretained'? See: http://stackoverflow.com/questions/4352561/retain-cycle-on-self-with-blocks
-    __unsafe_unretained ASIHTTPRequest *downloadOperation = [[PTDownloadManager sharedManager] requestForFile:self];
+    __unsafe_unretained ASIHTTPRequest *downloadOperation = [self.downloadManager requestForFile:self];
     NSAssert(downloadOperation.userInfo && [downloadOperation.userInfo objectForKey:@"queue"], @"download is currently executing or has already finished executing.");
     
     [downloadOperation setStartedBlock:^{
@@ -132,7 +148,7 @@
         self.savedLabelText = label.text;
     }
     
-    [self updateStatusForRequest:[[PTDownloadManager sharedManager] requestForFile:self]];
+    [self updateStatusForRequest:[self.downloadManager requestForFile:self]];
 }
 
 - (void)updateStatusForRequest:(ASIHTTPRequest *)request
