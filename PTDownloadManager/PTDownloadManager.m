@@ -19,7 +19,7 @@
 #import "ASINetworkQueue.h"
 #import "ASIHTTPRequest.h"
 
-#define kPTLibraryInfoFileName                  @"libraryInfo.plist"
+#define kPTDefaultLibraryInfoFileName           @"libraryInfo.plist"
 #define kPTLibraryInfoFilesKey                  @"files"
 #define kPTLibraryInfoRequestURLStringsKey      @"urls"
 
@@ -47,6 +47,7 @@
 
 @property (nonatomic, retain) NSString *diskCachePath;
 @property (nonatomic, retain) NSString *fileDownloadPath;
+@property (nonatomic, strong) NSString *libraryInfoFileName;
 
 @property (nonatomic, readonly) NSMutableDictionary *libraryInfo;
 @property (nonatomic, strong) ASINetworkQueue *downloadQueue;
@@ -85,6 +86,8 @@
         _diskCachePath = defaultPath;
         _fileDownloadPath = defaultPath;
         _scanningFileInDirectory = NO;
+        
+        self.libraryInfoFileName = kPTDefaultLibraryInfoFileName;
 
         self.downloadQueue = [[ASINetworkQueue alloc] init];
         self.downloadQueue.delegate = self;
@@ -94,6 +97,17 @@
         self.downloadQueue.shouldCancelAllRequestsOnFailure = NO;
         [self.downloadQueue go];
     }
+    return self;
+}
+
+- (id)initWithLibraryInfoFileName:(NSString *)libraryInfoFileName
+{
+    self = [self init];
+    
+    if (self) {
+        self.libraryInfoFileName = libraryInfoFileName;
+    }
+    
     return self;
 }
 
@@ -215,7 +229,7 @@
 - (NSMutableDictionary *)libraryInfo
 {
     if (!_libraryInfo) {
-        _libraryInfo = [[NSMutableDictionary alloc] initWithContentsOfFile:[self.diskCachePath stringByAppendingPathComponent:kPTLibraryInfoFileName]];
+        _libraryInfo = [[NSMutableDictionary alloc] initWithContentsOfFile:[self.diskCachePath stringByAppendingPathComponent:self.libraryInfoFileName]];
         if (!_libraryInfo) {
             _libraryInfo = [[NSMutableDictionary alloc] initWithObjectsAndKeys:
                             [NSMutableDictionary dictionary], kPTLibraryInfoFilesKey,
@@ -233,7 +247,7 @@
     
     NSData *data = [NSPropertyListSerialization dataWithPropertyList:self.libraryInfo format:NSPropertyListBinaryFormat_v1_0 options:0 error:NULL];
     if (data) {
-        [data writeToFile:[self.diskCachePath stringByAppendingPathComponent:kPTLibraryInfoFileName] atomically:YES];
+        [data writeToFile:[self.diskCachePath stringByAppendingPathComponent:self.libraryInfoFileName] atomically:YES];
     }
 }
 

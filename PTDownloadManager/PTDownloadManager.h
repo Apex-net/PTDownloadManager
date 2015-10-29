@@ -28,6 +28,8 @@ static NSString *const kPTDownloadManagerNotificationLoadFileFail = @"PTDownload
 
 + (PTDownloadManager *)sharedManager;
 
+- (id)initWithLibraryInfoFileName:(NSString *)libraryInfoFileName;
+
 - (void)changeDiskCapacity:(NSUInteger)diskCapacity andFileDownloadPath:(NSString *)path;
 
 - (PTFile *)addFileWithName:(NSString *)name date:(NSDate *)date request:(NSURLRequest *)request;
