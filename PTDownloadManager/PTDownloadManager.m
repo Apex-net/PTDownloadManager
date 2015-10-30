@@ -46,8 +46,8 @@
 }
 
 @property (nonatomic, retain) NSString *diskCachePath;
-@property (nonatomic, retain) NSString *fileDownloadPath;
 @property (nonatomic, strong) NSString *libraryInfoFileName;
+@property (readwrite, nonatomic, strong) NSString *fileDownloadPath;
 
 @property (nonatomic, readonly) NSMutableDictionary *libraryInfo;
 @property (nonatomic, strong) ASINetworkQueue *downloadQueue;
@@ -63,7 +63,6 @@
 @implementation PTDownloadManager
 
 @synthesize diskCachePath = _diskCachePath;
-@synthesize fileDownloadPath = _fileDownloadPath;
 @synthesize downloadQueue = _downloadQueue;
 @synthesize scanningFileInDirectory = _scanningFileInDirectory;
 

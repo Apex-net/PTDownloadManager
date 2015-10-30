@@ -26,6 +26,8 @@ static NSString *const kPTDownloadManagerNotificationLoadFileFail = @"PTDownload
 
 @property (nonatomic, readonly) NSArray *files;
 
+@property (readonly, nonatomic, strong) NSString *fileDownloadPath;
+
 + (PTDownloadManager *)sharedManager;
 
 - (id)initWithLibraryInfoFileName:(NSString *)libraryInfoFileName;
