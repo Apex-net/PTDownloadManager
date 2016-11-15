@@ -105,8 +105,7 @@
 
 - (NSOperation *)download
 {
-    // Why '__unsafe_unretained'? See: http://stackoverflow.com/questions/4352561/retain-cycle-on-self-with-blocks
-    __unsafe_unretained ASIHTTPRequest *downloadOperation = [self.downloadManager requestForFile:self];
+    ASIHTTPRequest *downloadOperation = [self.downloadManager requestForFile:self];
     NSAssert(downloadOperation.userInfo && [downloadOperation.userInfo objectForKey:@"queue"], @"download is currently executing or has already finished executing.");
     
     [downloadOperation setStartedBlock:^{
