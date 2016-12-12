@@ -160,7 +160,9 @@
     NSMutableDictionary *urls = [self.libraryInfo objectForKey:kPTLibraryInfoRequestURLStringsKey];
     [urls setObject:[[request URL] absoluteString] forKey:name];
 
-    [self saveLibraryInfo];
+    // old version:
+    //[self saveLibraryInfo];
+    // New version: move "LibraryInfo file saving" in "checkIfDownloadIsComplete"
     
     return [self fileWithName:name];
 }
@@ -305,6 +307,7 @@
 {
     if (_downloadQueue.requestsCount == 0 && _scanningFileInDirectory == NO) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationDownloadComplete object:self userInfo:nil];
+        [self saveLibraryInfo];
     }
 }
 
