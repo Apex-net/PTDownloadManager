@@ -25,18 +25,6 @@ typedef enum {
 } PTFileContentStatus;
 
 ////////////////////////////////////////////////////////////////////////////////
-// Delegate protocol
-////////////////////////////////////////////////////////////////////////////////
-
-@protocol PTFileDelegate <NSObject>
-
-@optional
-
-- (void)fileDidFinishDownloading:(PTFile *)file;
-
-@end
-
-////////////////////////////////////////////////////////////////////////////////
 // Class interface
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -49,9 +37,6 @@ typedef enum {
 @property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) NSDate *date;
 
-@property (nonatomic, assign) id<PTFileDelegate> delegate;
-
 - (NSOperation *)download;
-- (void)showProgressOnView:(UIView *)view label:(UILabel *)label;
 
 @end

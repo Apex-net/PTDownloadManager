@@ -36,17 +36,11 @@
 
 @interface PTFile ()
 
-@property UIProgressView *progressView;
-@property UILabel *label;
-@property NSString *savedLabelText;
-
 @property (nonatomic, strong) PTDownloadManager *downloadManager;
 
 
 - (id)initWithName:(NSString *)name date:(NSDate *)date;
 - (id)initWithName:(NSString *)name date:(NSDate *)date downloadManager:(PTDownloadManager *)downloadManager;
-
-- (void)updateStatusForRequest:(ASIHTTPRequest *)request;
 
 @end
 
@@ -54,9 +48,6 @@
 
 @synthesize name = _name;
 @synthesize date = _date;
-@synthesize progressView = _progressView;
-@synthesize label = _label;
-@synthesize savedLabelText = _savedLabelText;
 
 - (id)initWithName:(NSString *)name date:(NSDate *)date
 {
@@ -64,7 +55,6 @@
     if (self) {
         _name = name;
         _date = date;
-        _progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
         _downloadManager = [PTDownloadManager sharedManager];
     }
     return self;
@@ -76,7 +66,6 @@
     if (self) {
         _name = name;
         _date = date;
-        _progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
         _downloadManager = downloadManager;
     }
     return self;
@@ -108,64 +97,12 @@
     ASIHTTPRequest *downloadOperation = [self.downloadManager requestForFile:self];
     NSAssert(downloadOperation.userInfo && [downloadOperation.userInfo objectForKey:@"queue"], @"download is currently executing or has already finished executing.");
     
-    [downloadOperation setStartedBlock:^{
-        [self updateStatusForRequest:downloadOperation];
-    }];
-    [downloadOperation setFailedBlock:^{
-        [self updateStatusForRequest:downloadOperation];
-    }];
-    [downloadOperation setCompletionBlock:^{
-        [self updateStatusForRequest:downloadOperation];
-    }];
-
-    [downloadOperation setDownloadProgressDelegate:self.progressView];
-
     [(ASINetworkQueue *)[downloadOperation.userInfo objectForKey:@"queue"] addOperation:downloadOperation];
     
     // we don't want to expose userInfo externally
     downloadOperation.userInfo = nil;
 
     return downloadOperation;
-}
-
-- (void)showProgressOnView:(UIView *)view label:(UILabel *)label
-{
-    [self updateStatusForRequest:nil];
-    
-    // TODO give users an option tuning this to any CGFloat value as they wish
-    static CGFloat margin = 5.0;
-    if (view) {
-        self.progressView.frame = CGRectMake(margin,
-                                             view.bounds.size.height - self.progressView.frame.size.height - margin,
-                                             view.bounds.size.width - margin * 2,
-                                             self.progressView.frame.size.height);
-        [view addSubview:self.progressView];
-    }
-    
-    if (label) {
-        self.label = label;
-        self.savedLabelText = label.text;
-    }
-    
-    [self updateStatusForRequest:[self.downloadManager requestForFile:self]];
-}
-
-- (void)updateStatusForRequest:(ASIHTTPRequest *)request
-{
-    if (!request || request.isCancelled || request.isFinished) {
-        [self.progressView removeFromSuperview];
-        self.label.text = self.savedLabelText;
-        
-        if ([self.delegate respondsToSelector:@selector(fileDidFinishDownloading:)]) {
-            [self.delegate fileDidFinishDownloading:self];
-        }
-    }
-    else if (request.isExecuting) {
-        self.label.text = NSLocalizedString(@"Loading...", nil);
-    }
-    else if (request.isReady) {
-        self.label.text = NSLocalizedString(@"Waiting...", nil);
-    }
 }
 
 @end
