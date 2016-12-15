@@ -31,8 +31,8 @@
 
 @property (nonatomic) NSString *name;
 
-- (id)initWithName:(NSString *)name date:(NSDate *)date;
-- (id)initWithName:(NSString *)name date:(NSDate *)date downloadManager:(PTDownloadManager *)downloadManager;
+- (id)initWithName:(NSString *)name contentURL:(NSURL *)contentURL date:(NSDate *)date;
+- (id)initWithName:(NSString *)name contentURL:(NSURL *)contentURL date:(NSDate *)date downloadManager:(PTDownloadManager *)downloadManager;
 
 @end
 
@@ -180,7 +180,7 @@
     
     for (PTFile *file in self.files) {
         if (force == YES || file.status != PTFileContentStatusAvailable) {
-            [file download];
+            [self download:file];
         }
         else {
             [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationLoadFileComplete object:self userInfo:nil];
@@ -191,6 +191,22 @@
         _scanningFileInDirectory = NO;
         [self performSelectorOnMainThread:@selector(checkIfDownloadIsComplete) withObject:nil waitUntilDone:YES];
     }
+}
+
+- (void)download:(PTFile *)file
+{
+    if ([self requestForFile:file]) {
+        return;
+    }
+    
+    NSString *urlString = [[self.libraryInfo objectForKey:kPTLibraryInfoRequestURLStringsKey] objectForKey:file.name];
+    ASIHTTPRequest *request = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:urlString]];
+    request.temporaryFileDownloadPath = [[NSTemporaryDirectory() stringByAppendingPathComponent:file.name] stringByAppendingPathExtension:@"download"];
+    request.downloadDestinationPath = [self.fileDownloadPath stringByAppendingPathComponent:file.name];
+    request.allowResumeForFileDownloads = YES;
+    request.shouldContinueWhenAppEntersBackground = YES;
+    
+    [self.downloadQueue addOperation:request];
 }
 
 - (void)removeFile:(PTFile *)file
@@ -224,7 +240,14 @@
 - (PTFile *)fileWithName:(NSString *)name
 {
     NSDictionary *files = [self.libraryInfo objectForKey:kPTLibraryInfoFilesKey];
-    return [files objectForKey:name] ? [[PTFile alloc] initWithName:name date:[files objectForKey:name] downloadManager:self] : nil;
+    
+    if (![files objectForKey:name]) {
+        return nil;
+    }
+    
+    NSURL *contentURL = [NSURL fileURLWithPath:[self.fileDownloadPath stringByAppendingPathComponent:name]];
+    NSDate *date = [files objectForKey:name];
+    return [[PTFile alloc] initWithName:name contentURL:contentURL date:date downloadManager:self];
 }
 
 - (NSMutableDictionary *)libraryInfo
@@ -280,13 +303,7 @@
         }
     }
     
-    ASIHTTPRequest *request = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:urlString]];
-    request.userInfo = [NSDictionary dictionaryWithObject:self.downloadQueue forKey:@"queue"];
-    request.temporaryFileDownloadPath = [[NSTemporaryDirectory() stringByAppendingPathComponent:file.name] stringByAppendingPathExtension:@"download"];
-    request.downloadDestinationPath = [self.fileDownloadPath stringByAppendingPathComponent:file.name];
-    request.allowResumeForFileDownloads = YES;
-    request.shouldContinueWhenAppEntersBackground = YES;
-    return request;
+    return nil;
 }
 
 - (void)queueDidFinishRequest

@@ -37,6 +37,4 @@ typedef enum {
 @property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) NSDate *date;
 
-- (NSOperation *)download;
-
 @end

@@ -39,41 +39,41 @@
 @property (nonatomic, strong) PTDownloadManager *downloadManager;
 
 
-- (id)initWithName:(NSString *)name date:(NSDate *)date;
-- (id)initWithName:(NSString *)name date:(NSDate *)date downloadManager:(PTDownloadManager *)downloadManager;
+- (id)initWithName:(NSString *)name contentURL:(NSURL *)contentURL date:(NSDate *)date;
+- (id)initWithName:(NSString *)name contentURL:(NSURL *)contentURL date:(NSDate *)date downloadManager:(PTDownloadManager *)downloadManager;
 
 @end
 
 @implementation PTFile
 
 @synthesize name = _name;
+@synthesize contentURL = _contentURL;
 @synthesize date = _date;
 
-- (id)initWithName:(NSString *)name date:(NSDate *)date
+- (id)initWithName:(NSString *)name contentURL:(NSURL *)contentURL date:(NSDate *)date
 {
     self = [super init];
     if (self) {
         _name = name;
+        _contentURL = contentURL;
         _date = date;
+        
         _downloadManager = [PTDownloadManager sharedManager];
     }
     return self;
 }
 
-- (id)initWithName:(NSString *)name date:(NSDate *)date downloadManager:(PTDownloadManager *)downloadManager
+- (id)initWithName:(NSString *)name contentURL:(NSURL *)contentURL date:(NSDate *)date downloadManager:(PTDownloadManager *)downloadManager
 {
     self = [super init];
     if (self) {
         _name = name;
+        _contentURL = contentURL;
         _date = date;
+
         _downloadManager = downloadManager;
     }
     return self;
-}
-
-- (NSURL *)contentURL
-{
-    return [NSURL fileURLWithPath:[[self.downloadManager requestForFile:self] downloadDestinationPath]];
 }
 
 - (PTFileContentStatus)status
@@ -90,19 +90,6 @@
     }
     
     return PTFileContentStatusNone;
-}
-
-- (NSOperation *)download
-{
-    ASIHTTPRequest *downloadOperation = [self.downloadManager requestForFile:self];
-    NSAssert(downloadOperation.userInfo && [downloadOperation.userInfo objectForKey:@"queue"], @"download is currently executing or has already finished executing.");
-    
-    [(ASINetworkQueue *)[downloadOperation.userInfo objectForKey:@"queue"] addOperation:downloadOperation];
-    
-    // we don't want to expose userInfo externally
-    downloadOperation.userInfo = nil;
-
-    return downloadOperation;
 }
 
 @end
