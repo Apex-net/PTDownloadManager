@@ -23,6 +23,8 @@
 #define kPTLibraryInfoFilesKey                  @"files"
 #define kPTLibraryInfoRequestURLStringsKey      @"urls"
 
+#define kPTDownloadBatchSize    1000
+
 ////////////////////////////////////////////////////////////////////////////////
 // Internal APIs
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,8 +54,12 @@
 @property (nonatomic, readonly) NSMutableDictionary *libraryInfo;
 @property (nonatomic, strong) ASINetworkQueue *downloadQueue;
 
+@property (nonatomic, assign) BOOL downloadForced;
 @property (nonatomic, assign) BOOL scanningFileInDirectory;
+@property (nonatomic, copy) NSArray *filesToDownload;
+@property (nonatomic, assign) NSRange downloadRange;
 
+- (void)batchDownloadFiles:(NSArray *)files batchSize:(NSUInteger)batchSize;
 - (void)saveLibraryInfo;
 - (void)createDirectoryAtPath:(NSString *)path;
 - (ASIHTTPRequest *)requestForFile:(PTFile *)file;
@@ -64,7 +70,10 @@
 
 @synthesize diskCachePath = _diskCachePath;
 @synthesize downloadQueue = _downloadQueue;
+@synthesize downloadForced = _downloadForced;
 @synthesize scanningFileInDirectory = _scanningFileInDirectory;
+@synthesize filesToDownload = _filesToDownload;
+@synthesize downloadRange = _downloadRange;
 
 + (PTDownloadManager *)sharedManager
 {
@@ -85,6 +94,9 @@
         _diskCachePath = defaultPath;
         _fileDownloadPath = defaultPath;
         _scanningFileInDirectory = NO;
+        _downloadForced = NO;
+        _filesToDownload = nil;
+        _downloadRange = NSMakeRange(0, 0);
         
         self.libraryInfoFileName = kPTDefaultLibraryInfoFileName;
 
@@ -174,12 +186,31 @@
 
 - (void)startFileDownloadsForced:(BOOL)force
 {
-    if (force == NO) {
-         _scanningFileInDirectory = YES;
+    self.downloadForced = force;
+    [self batchDownloadFiles:self.files batchSize:kPTDownloadBatchSize];
+}
+
+- (void)batchDownloadFiles:(NSArray *)files batchSize:(NSUInteger)batchSize
+{
+    if (!self.filesToDownload) {
+        self.filesToDownload = files;
     }
     
-    for (PTFile *file in self.files) {
-        if (force == YES || file.status != PTFileContentStatusAvailable) {
+    if (NSEqualRanges(self.downloadRange, NSMakeRange(0, 0))) {
+        NSUInteger length = MIN(batchSize, self.filesToDownload.count);
+        self.downloadRange = NSMakeRange(0, length);
+    }
+    else {
+        NSUInteger length = MIN(batchSize, self.filesToDownload.count - NSMaxRange(self.downloadRange));
+        self.downloadRange = NSMakeRange(NSMaxRange(self.downloadRange), length);
+    }
+    
+    if (self.downloadForced == NO) {
+        _scanningFileInDirectory = YES;
+    }
+    
+    for (PTFile *file in [self.filesToDownload subarrayWithRange:self.downloadRange]) {
+        if (self.downloadForced == YES || file.status != PTFileContentStatusAvailable) {
             [self download:file];
         }
         else {
@@ -187,7 +218,7 @@
         }
     }
     
-    if (force == NO) {
+    if (self.downloadForced == NO) {
         _scanningFileInDirectory = NO;
         [self performSelectorOnMainThread:@selector(checkIfDownloadIsComplete) withObject:nil waitUntilDone:YES];
     }
@@ -322,10 +353,21 @@
 
 - (void)checkIfDownloadIsComplete
 {
-    if (_downloadQueue.requestsCount == 0 && _scanningFileInDirectory == NO) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationDownloadComplete object:self userInfo:nil];
-        [self saveLibraryInfo];
+    if (_downloadQueue.requestsCount != 0 || _scanningFileInDirectory == YES) {
+        return;
     }
+    
+    if (NSMaxRange(self.downloadRange) < self.filesToDownload.count)
+    {
+        [self batchDownloadFiles:self.filesToDownload batchSize:kPTDownloadBatchSize];
+        return;
+    }
+    
+    self.filesToDownload = nil;
+    self.downloadRange = NSMakeRange(0, 0);
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPTDownloadManagerNotificationDownloadComplete object:self userInfo:nil];
+    [self saveLibraryInfo];
 }
 
 @end
