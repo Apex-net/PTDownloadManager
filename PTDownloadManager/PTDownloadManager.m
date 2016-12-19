@@ -236,6 +236,7 @@
     request.downloadDestinationPath = [self.fileDownloadPath stringByAppendingPathComponent:file.name];
     request.allowResumeForFileDownloads = YES;
     request.shouldContinueWhenAppEntersBackground = YES;
+    request.validatesSecureCertificate = NO;
     
     [self.downloadQueue addOperation:request];
 }
